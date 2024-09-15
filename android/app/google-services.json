@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "29572786777",
+    "project_id": "spiderwebforecast",
+    "storage_bucket": "spiderwebforecast.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:29572786777:android:3c3a96df4822f87e3c1f48",
+        "android_client_info": {
+          "package_name": "com.example.spiderwebforecast"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBUFpW6fobWWv7Yntm0PZf9-ohdhz0oj1g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
