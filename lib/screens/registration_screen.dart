@@ -61,7 +61,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Register Newtokpro',
+                      'Register Webforecast',
                       style:
                           TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),

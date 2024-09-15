@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Login Newtokpro',
+                      'Login Webforecast',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,

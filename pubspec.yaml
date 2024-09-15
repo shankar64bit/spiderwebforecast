@@ -43,6 +43,8 @@ dependencies:
   provider: ^6.1.2
   excel: ^3.0.0
   http: ^0.13.6
+  font_awesome_flutter: ^10.4.0
+  geolocator: ^11.1.0
 
 dev_dependencies:
   flutter_test:
