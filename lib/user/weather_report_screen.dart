@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
-import '../admin/services/location_service.dart';
+import '../services/location_service.dart';
 import '../models/userpreferences.dart';
 import '../utils/constant.dart';
 import 'setting.dart';
@@ -51,6 +51,29 @@ class _WeatherReportScreenState extends State<WeatherReportScreen> {
     }
   }
 
+  Future<void> _openSettings() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => SettingsScreen()),
+    );
+    if (result != null) {
+      setState(() {
+        temperatureUnit = result['unit'];
+        updateFrequency = result['frequency'];
+      });
+      // Optionally, you can re-fetch weather data based on new preferences
+    }
+  }
+
+  // Convert temperature values based on the selected unit
+  double _convertTemperature(double tempInCelsius) {
+    if (temperatureUnit == 'Celsius') {
+      return tempInCelsius;
+    } else {
+      return tempInCelsius * 9 / 5 + 32;
+    }
+  }
+
   Widget _buildWeatherDetails() {
     // Assume we now have daily or hourly forecast data in weatherReports
     return ListView.builder(
@@ -82,9 +105,9 @@ class _WeatherReportScreenState extends State<WeatherReportScreen> {
                     textAlign: TextAlign.left),
                 const SizedBox(height: 16.0),
                 _weatherReportItem(FontAwesomeIcons.temperatureHigh,
-                    'Temperature: ${main['temp']} ${_getUnit()}'),
+                    'Temperature: ${_convertTemperature(main['temp'])} ${_getUnit()}'),
                 _weatherReportItem(FontAwesomeIcons.thermometerHalf,
-                    'Feels Like: ${main['feels_like']} ${_getUnit()}'),
+                    'Feels Like: ${_convertTemperature(main['feels_like'])} ${_getUnit()}'),
                 _weatherReportItem(FontAwesomeIcons.cloud,
                     'Condition: ${mainWeather['description']}'),
                 _weatherReportItem(
@@ -141,13 +164,7 @@ class _WeatherReportScreenState extends State<WeatherReportScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: () {
-              // Open settings page to change user preferences
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => SettingsScreen()),
-              );
-            },
+            onPressed: _openSettings, // Use the new method to open settings
           ),
         ],
       ),

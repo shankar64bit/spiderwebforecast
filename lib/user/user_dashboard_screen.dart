@@ -157,7 +157,8 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: AppbarDesignBackgraound(),
-        title: Text('Weather Dashboard', style: TextStyle(color: Colors.white)),
+        title:
+            Text('Spiderweb forecast', style: TextStyle(color: Colors.white)),
         actions: [
           IconButton(
             icon: Icon(Icons.logout, color: Colors.white),

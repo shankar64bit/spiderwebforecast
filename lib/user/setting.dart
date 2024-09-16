@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import '../models/userpreferences.dart';
 import '../utils/constant.dart';
 
@@ -31,7 +30,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _savePreferences() async {
     await UserPreferences.setTemperatureUnit(selectedUnit);
     await UserPreferences.setUpdateFrequency(selectedFrequency);
-    Navigator.pop(context);
+    // Pop and return the updated preferences
+    Navigator.pop(context, {
+      'unit': selectedUnit,
+      'frequency': selectedFrequency,
+    });
   }
 
   @override

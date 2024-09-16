@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'admin/admin_dashboard_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/registration_screen.dart';
 import 'user/upload_excel_screen.dart';
@@ -15,7 +14,6 @@ class AppRoutes {
   static Map<String, WidgetBuilder> routes = {
     login: (context) => LoginScreen(),
     register: (context) => RegistrationScreen(),
-    adminDashboard: (context) => AdminDashboardScreen(),
     userDashboard: (context) => UserDashboardScreen(),
     uploadExcel: (context) => UploadExcelScreen(),
   };

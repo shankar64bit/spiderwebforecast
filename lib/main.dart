@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
-import 'admin/admin_dashboard_screen.dart';
 import 'firebase_options.dart';
 import 'services/auth_service.dart';
 import 'routes.dart';
@@ -32,7 +31,8 @@ class MyApp extends StatelessWidget {
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
         home: AuthWrapper(),
-        routes: AppRoutes.routes,
+        routes:
+            AppRoutes.routes, // Ensure this only includes user-related routes
       ),
     );
   }
@@ -50,19 +50,7 @@ class AuthWrapper extends StatelessWidget {
           if (user == null) {
             return LoginScreen();
           }
-          return FutureBuilder<bool>(
-            future: authService.isAdmin(),
-            builder: (_, AsyncSnapshot<bool> snapshot) {
-              if (snapshot.connectionState == ConnectionState.done) {
-                if (snapshot.data == true) {
-                  return AdminDashboardScreen();
-                } else {
-                  return UserDashboardScreen();
-                }
-              }
-              return Scaffold(body: Center(child: CircularProgressIndicator()));
-            },
-          );
+          return UserDashboardScreen();
         }
         return Scaffold(body: Center(child: CircularProgressIndicator()));
       },
