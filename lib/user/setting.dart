@@ -44,44 +44,74 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Temperature Unit',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            DropdownButton<String>(
-              value: selectedUnit,
-              items: ['Celsius', 'Fahrenheit']
-                  .map((unit) => DropdownMenuItem(
-                        child: Text(unit),
-                        value: unit,
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedUnit = value!;
-                });
-              },
+            _buildSettingCard(
+              title: 'Temperature Unit',
+              child: DropdownButton<String>(
+                value: selectedUnit,
+                items: ['Celsius', 'Fahrenheit']
+                    .map((unit) => DropdownMenuItem(
+                          child: Text(
+                            unit,
+                            style: TextStyle(
+                              color:
+                                  Colors.black, // Ensure text color is visible
+                            ),
+                          ),
+                          value: unit,
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedUnit = value!;
+                  });
+                },
+                isExpanded: true,
+                style: TextStyle(
+                  color: Colors.black, // Ensure text color is visible
+                  fontSize: 16.0,
+                ),
+                underline: Container(),
+                icon: Icon(
+                  Icons.arrow_drop_down,
+                  color: Colors.black, // Ensure icon color is visible
+                ),
+              ),
             ),
             const SizedBox(height: 20),
-            const Text(
-              'Update Frequency (minutes)',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            DropdownButton<int>(
-              value: selectedFrequency,
-              items: [15, 30, 60, 120]
-                  .map((frequency) => DropdownMenuItem(
-                        child: Text('$frequency minutes'),
-                        value: frequency,
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  selectedFrequency = value!;
-                });
-              },
+            _buildSettingCard(
+              title: 'Update Frequency (minutes)',
+              child: DropdownButton<int>(
+                value: selectedFrequency,
+                items: [15, 30, 60, 120]
+                    .map((frequency) => DropdownMenuItem(
+                          child: Text(
+                            '$frequency minutes',
+                            style: TextStyle(
+                              color:
+                                  Colors.black, // Ensure text color is visible
+                            ),
+                          ),
+                          value: frequency,
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() {
+                    selectedFrequency = value!;
+                  });
+                },
+                isExpanded: true,
+                style: TextStyle(
+                  color: Colors.black, // Ensure text color is visible
+                  fontSize: 16.0,
+                ),
+                underline: Container(),
+                icon: Icon(
+                  Icons.arrow_drop_down,
+                  color: Colors.black, // Ensure icon color is visible
+                ),
+              ),
             ),
             const SizedBox(height: 40),
             Container(
@@ -95,8 +125,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                borderRadius:
-                    BorderRadius.circular(8), // Optional: for rounded corners
+                borderRadius: BorderRadius.circular(8), // Rounded corners
               ),
               child: ElevatedButton(
                 onPressed: _savePreferences,
@@ -108,6 +137,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: const Text('Save Preferences'),
               ),
             ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingCard({required String title, required Widget child}) {
+    return Card(
+      elevation: 4.0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12.0),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 18.0,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12.0),
+            child,
           ],
         ),
       ),
