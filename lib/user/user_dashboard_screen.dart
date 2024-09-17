@@ -246,6 +246,9 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
                 return ListView.builder(
                   itemCount: filteredLocations.length,
+                  padding:
+                      EdgeInsets.only(bottom: 90), // Add padding to the bottom
+
                   itemBuilder: (context, index) {
                     final location = filteredLocations[index];
                     return Card(
