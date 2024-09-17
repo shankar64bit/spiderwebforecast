@@ -339,9 +339,15 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Spiderweb Forecast', style: TextStyle(color: Colors.white)),
-            Text(
-              '$_currentLocation | $_currentTemperature°C',
-              style: TextStyle(color: Colors.white70, fontSize: 12),
+            Row(
+              children: [
+                Icon(Icons.location_on, size: 12, color: Colors.red),
+                SizedBox(width: 4),
+                Text(
+                  '$_currentLocation | $_currentTemperature°C',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
             ),
           ],
         ),
