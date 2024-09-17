@@ -104,7 +104,39 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     }
   }
 
-  Future _uploadExcel(BuildContext context) async {
+  Future<void> _showInstructionsAndUpload(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: false, // User must tap button for close dialog!
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Instructions for Uploading Excel'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: <Widget>[
+                Text('1. Ensure the Excel file is in .xlsx format.'),
+                Text(
+                    '2. The Excel file should contain a column named "city" for the cities you want to fetch weather data for.'),
+                Text('3. Click "Upload Excel" after selecting the file.'),
+                Text('4. Please ensure the data is correct before uploading.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK'),
+              onPressed: () {
+                Navigator.of(context).pop();
+                _uploadExcel(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _uploadExcel(BuildContext context) async {
     FilePickerResult? result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
       allowedExtensions: ['xlsx'],
@@ -144,7 +176,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     }
   }
 
-  Future _getWeatherForLocation(String locationName) async {
+  Future<void> _getWeatherForLocation(String locationName) async {
     try {
       var weatherData = await _weatherService.getWeather(locationName);
       Navigator.push(
@@ -162,7 +194,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     }
   }
 
-  Future _logout(BuildContext context) async {
+  Future<void> _logout(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
       Navigator.pushAndRemoveUntil(
@@ -299,7 +331,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               height: 50,
               width: 150,
               child: FloatingActionButton.extended(
-                onPressed: () => _uploadExcel(context),
+                onPressed: () => _showInstructionsAndUpload(context),
                 icon: Icon(Icons.upload_file),
                 label: Text('Upload Excel', style: TextStyle(fontSize: 12)),
                 backgroundColor: Color.fromARGB(133, 40, 58, 255),
