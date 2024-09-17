@@ -3,6 +3,8 @@ import 'package:file_picker/file_picker.dart';
 import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart'; // Added for permissions
 import '../../../screens/login_screen.dart';
 import '../utils/constant.dart';
 import 'services/excel_service.dart';
@@ -18,16 +20,24 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   final ExcelService _excelService = ExcelService();
   final WeatherService _weatherService = WeatherService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final TextEditingController _searchController = TextEditingController();
+  final TextEditingController _addLocationController = TextEditingController();
 
   List<Map<String, dynamic>> locations = [];
   List<Map<String, dynamic>> filteredLocations = [];
-  TextEditingController _searchController = TextEditingController();
-  TextEditingController _addLocationController = TextEditingController();
   late Stream<QuerySnapshot> _locationsStream;
+
+  String _currentLocation = 'Unknown';
+  String _currentTemperature = 'N/A';
 
   @override
   void initState() {
     super.initState();
+    _initializeStream();
+    _getCurrentLocationAndWeather();
+  }
+
+  void _initializeStream() {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       _locationsStream = _firestore
@@ -35,6 +45,36 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           .doc(user.uid)
           .collection('locations')
           .snapshots();
+    }
+  }
+
+  Future<void> _getCurrentLocationAndWeather() async {
+    // Request location permissions
+    PermissionStatus permission = await Permission.location.request();
+    if (permission.isGranted) {
+      // Get current location
+      try {
+        Position position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+        );
+
+        double latitude = position.latitude;
+        double longitude = position.longitude;
+
+        // Fetch weather data
+        var weatherData =
+            await _weatherService.getWeatherByCoordinates(latitude, longitude);
+        setState(() {
+          _currentLocation = weatherData['name'] ?? 'Unknown Location';
+          _currentTemperature =
+              weatherData['main']['temp']?.toStringAsFixed(1) ?? 'N/A';
+        });
+      } catch (e) {
+        print('Error fetching location: $e');
+        _showSnackBar('Error fetching location. Please try again later.', true);
+      }
+    } else {
+      _showSnackBar('Location permission denied.', true);
     }
   }
 
@@ -267,14 +307,44 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     }
   }
 
+  Map<String, String> locationTemperatures = {}; // Store temperatures
+
+  Future<void> _fetchWeatherForLocations() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    for (var location in locations) {
+      String locationName = location['name'];
+      if (!locationTemperatures.containsKey(locationName)) {
+        try {
+          var weatherData = await _weatherService.getWeather(locationName);
+          setState(() {
+            locationTemperatures[locationName] = (weatherData['main']['temp'])
+                .toStringAsFixed(1); // Convert Kelvin to Celsius
+          });
+        } catch (e) {
+          print('Error fetching weather for $locationName: $e');
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: AppbarDesignBackgraound(),
         backgroundColor: Color.fromARGB(133, 40, 58, 255),
-        title:
+        title: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Text('Spiderweb Forecast', style: TextStyle(color: Colors.white)),
+            Text(
+              '$_currentLocation | $_currentTemperature°C',
+              style: TextStyle(color: Colors.white70, fontSize: 12),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.logout, color: Colors.white),
@@ -284,26 +354,41 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       ),
       body: Column(
         children: [
+          // Search bar
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _searchController,
-                    decoration: InputDecoration(
-                      hintText: 'Search locations',
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    onChanged: _filterLocations,
+            padding: const EdgeInsets.symmetric(
+                horizontal: 16.0, vertical: 10.0), // Slimmer padding
+            child: Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12), // Rounded corners
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey.withOpacity(0.5),
+                    spreadRadius: 1,
+                    blurRadius: 6,
+                    offset: Offset(0, 2), // Shadow position
                   ),
+                ],
+              ),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search locations',
+                  hintStyle:
+                      TextStyle(color: Colors.grey[600]), // Subtle hint color
+                  prefixIcon: Icon(Icons.search,
+                      color: Colors.blueGrey), // Subtle icon color
+                  border: InputBorder.none, // Remove default border
+                  contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16.0, vertical: 10.0), // Internal padding
                 ),
-              ],
+                onChanged: _filterLocations,
+              ),
             ),
           ),
+
+          // Locations list
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _locationsStream,
@@ -325,6 +410,9 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                   };
                 }).toList();
 
+                // Fetch weather for locations
+                _fetchWeatherForLocations();
+
                 filteredLocations = _searchController.text.isEmpty
                     ? locations
                     : locations.where((location) {
@@ -340,6 +428,8 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                   padding: EdgeInsets.only(bottom: 90),
                   itemBuilder: (context, index) {
                     final location = filteredLocations[index];
+                    final temperature =
+                        locationTemperatures[location['name']] ?? 'N/A';
                     return Card(
                       elevation: 4.0,
                       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -351,10 +441,20 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                           color: Color.fromARGB(133, 40, 58, 255),
                         ),
                         title: Text(
-                          location['name'],
+                          '${location['name']}',
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
-                        subtitle: Text(location['zipCode'] ?? ''),
+                        subtitle: Row(
+                          children: [
+                            Text(
+                              '${temperature}°C',
+                              style: TextStyle(
+                                  color: Color.fromARGB(255, 104, 65, 244)),
+                            ),
+                            SizedBox(width: 10),
+                            Text(location['zipCode'] ?? ''),
+                          ],
+                        ),
                         trailing: IconButton(
                           icon: Icon(Icons.delete, color: Colors.red),
                           onPressed: () => _deleteLocation(location['id']),
@@ -366,7 +466,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                 );
               },
             ),
-          ),
+          )
         ],
       ),
       floatingActionButton: Padding(
@@ -457,12 +557,12 @@ class TemporaryDataScreen extends StatelessWidget {
                 final name = report['name'] ?? 'Unknown City';
                 final temperature = report['main'] != null &&
                         report['main']['temp'] != null
-                    ? (report['main']['temp'])
+                    ? (report['main']['temp'] - 273.15)
                         .toStringAsFixed(1) // Convert from Kelvin to Celsius
                     : 'N/A';
                 final feelsLike = report['main'] != null &&
                         report['main']['feels_like'] != null
-                    ? (report['main']['feels_like'])
+                    ? (report['main']['feels_like'] - 273.15)
                         .toStringAsFixed(1) // Convert from Kelvin to Celsius
                     : 'N/A';
                 final weather =

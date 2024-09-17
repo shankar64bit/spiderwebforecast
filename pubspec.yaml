@@ -45,6 +45,7 @@ dependencies:
   font_awesome_flutter: ^10.4.0
   geolocator: ^11.1.0
   intl: ^0.18.1
+  permission_handler: ^11.0.1
 
 dev_dependencies:
   flutter_test:
@@ -71,11 +72,6 @@ flutter:
 
   assets:
     - assets/images/
-    - assets/images/sunny.jpg
-    - assets/images/rainy.jpg
-    - assets/images/cloudy.png
-    - assets/images/windy.jpg
-    - assets/images/default.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware
