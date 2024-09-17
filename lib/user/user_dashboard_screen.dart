@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../screens/login_screen.dart';
-import '../../../utils/ui_helpers.dart';
 import '../utils/constant.dart';
 import 'services/excel_service.dart';
 import 'services/weather_services.dart';
@@ -54,9 +53,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
     String input = _addLocationController.text.trim();
     if (input.isEmpty) {
-      UIHelpers.showSnackBar(
-          context, 'Please enter a location name or zip code',
-          isError: true);
+      _showSnackBar('Please enter a location name or zip code', true);
       return;
     }
 
@@ -70,17 +67,17 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           .collection('locations')
           .add({
         'type': isZipCode ? 'zipCode' : 'city',
-        'name': weatherData['name'],
+        'name': weatherData['name'] ?? 'Unknown City',
         'zipCode': isZipCode ? input : '',
       });
 
       _addLocationController.clear();
-      UIHelpers.showSnackBar(context, 'Location added successfully');
+      _showSnackBar('Location added successfully');
     } catch (e) {
       print('Error adding location: $e');
-      UIHelpers.showSnackBar(context,
+      _showSnackBar(
           'Error adding location. Please check the name or zip code and try again.',
-          isError: true);
+          true);
     }
   }
 
@@ -95,45 +92,42 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           .collection('locations')
           .doc(docId)
           .delete();
-      UIHelpers.showSnackBar(context, 'Location deleted successfully');
+      _showSnackBar('Location deleted successfully');
     } catch (e) {
       print('Error deleting location: $e');
-      UIHelpers.showSnackBar(
-          context, 'Error deleting location. Please try again.',
-          isError: true);
+      _showSnackBar('Error deleting location. Please try again.', true);
     }
   }
 
-  Future<void> _showInstructionsAndUpload(BuildContext context) async {
-    return showDialog<void>(
+  Future<void> _showUploadInstructions(BuildContext context) async {
+    bool? shouldProceed = await showDialog<bool>(
       context: context,
-      barrierDismissible: false, // User must tap button for close dialog!
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Instructions for Uploading Excel'),
-          content: SingleChildScrollView(
-            child: ListBody(
-              children: <Widget>[
-                Text('1. Ensure the Excel file is in .xlsx format.'),
-                Text(
-                    '2. The Excel file should contain a column named "city" for the cities you want to fetch weather data for.'),
-                Text('3. Click "Upload Excel" after selecting the file.'),
-                Text('4. Please ensure the data is correct before uploading.'),
-              ],
-            ),
+          title: Text('Upload Instructions'),
+          content: Text(
+            'To upload an Excel file with weather data:\n'
+            '1. Ensure the file is in .xlsx format.\n'
+            '2. The file should contain a column named "city" with city names.\n'
+            '3. Click "Upload Excel" to select and upload your file.\n'
+            '4. The app will process the file and display the weather data.',
+            style: TextStyle(fontSize: 16),
           ),
-          actions: <Widget>[
+          actions: [
             TextButton(
-              child: Text('OK'),
+              child: Text('Got It'),
               onPressed: () {
-                Navigator.of(context).pop();
-                _uploadExcel(context);
+                Navigator.of(context).pop(true);
               },
             ),
           ],
         );
       },
     );
+
+    if (shouldProceed == true) {
+      _uploadExcel(context); // Proceed with file upload
+    }
   }
 
   Future<void> _uploadExcel(BuildContext context) async {
@@ -164,14 +158,14 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           context,
           MaterialPageRoute(
             builder: (context) =>
-                WeatherReportScreen(weatherReports: weatherReports),
+                TemporaryDataScreen(weatherReports: weatherReports),
           ),
         );
       } catch (e) {
         print('Error processing Excel file: $e');
-        UIHelpers.showSnackBar(context,
+        _showSnackBar(
             'Error processing file. Please check the file format and try again.',
-            isError: true);
+            true);
       }
     }
   }
@@ -188,9 +182,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       );
     } catch (e) {
       print('Error fetching weather: $e');
-      UIHelpers.showSnackBar(
-          context, 'Error fetching weather. Please try again later.',
-          isError: true);
+      _showSnackBar('Error fetching weather. Please try again later.', true);
     }
   }
 
@@ -204,8 +196,18 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       );
     } catch (e) {
       print('Error logging out: $e');
-      UIHelpers.showSnackBar(context, 'Error logging out. Please try again.',
-          isError: true);
+      _showSnackBar('Error logging out. Please try again.', true);
+    }
+  }
+
+  void _showSnackBar(String message, [bool isError = false]) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: isError ? Colors.red : Colors.green,
+        ),
+      );
     }
   }
 
@@ -214,8 +216,9 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     return Scaffold(
       appBar: AppBar(
         flexibleSpace: AppbarDesignBackgraound(),
+        backgroundColor: Color.fromARGB(133, 40, 58, 255),
         title:
-            Text('Spiderweb forecast', style: TextStyle(color: Colors.white)),
+            Text('Spiderweb Forecast', style: TextStyle(color: Colors.white)),
         actions: [
           IconButton(
             icon: Icon(Icons.logout, color: Colors.white),
@@ -261,7 +264,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                   return {
                     'id': doc.id,
                     'type': doc['type'],
-                    'name': doc['name'],
+                    'name': doc['name'] ?? 'Unknown Location',
                     'zipCode': doc['zipCode'] ?? '',
                   };
                 }).toList();
@@ -278,17 +281,12 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
                 return ListView.builder(
                   itemCount: filteredLocations.length,
-                  padding:
-                      EdgeInsets.only(bottom: 90), // Add padding to the bottom
-
+                  padding: EdgeInsets.only(bottom: 90),
                   itemBuilder: (context, index) {
                     final location = filteredLocations[index];
                     return Card(
                       elevation: 4.0,
                       margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
                       child: ListTile(
                         leading: Icon(
                           location['type'] == 'city'
@@ -301,15 +299,9 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                           style: TextStyle(fontWeight: FontWeight.bold),
                         ),
                         subtitle: Text(location['zipCode'] ?? ''),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: Icon(Icons.delete, color: Colors.red),
-                              onPressed: () => _deleteLocation(location['id']),
-                            ),
-                            Icon(Icons.arrow_forward_ios, color: Colors.grey),
-                          ],
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _deleteLocation(location['id']),
                         ),
                         onTap: () => _getWeatherForLocation(location['name']),
                       ),
@@ -326,20 +318,20 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            // Upload Excel Button
             SizedBox(
               height: 50,
               width: 150,
               child: FloatingActionButton.extended(
-                onPressed: () => _showInstructionsAndUpload(context),
+                onPressed: () {
+                  _showUploadInstructions(
+                      context); // Show instructions before upload
+                },
                 icon: Icon(Icons.upload_file),
                 label: Text('Upload Excel', style: TextStyle(fontSize: 12)),
                 backgroundColor: Color.fromARGB(133, 40, 58, 255),
               ),
             ),
             SizedBox(width: 10),
-
-            // Add Location Button
             SizedBox(
               height: 50,
               width: 150,
@@ -383,6 +375,93 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class TemporaryDataScreen extends StatelessWidget {
+  final List<Map<String, dynamic>> weatherReports;
+
+  TemporaryDataScreen({required this.weatherReports});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        flexibleSpace: AppbarDesignBackgraound(),
+        title: Text('Multi Weather Data'),
+      ),
+      body: weatherReports.isNotEmpty
+          ? ListView.builder(
+              itemCount: weatherReports.length,
+              itemBuilder: (context, index) {
+                final report = weatherReports[index];
+
+                // Extracting the values from the report
+                final name = report['name'] ?? 'Unknown City';
+                final temperature = report['main'] != null &&
+                        report['main']['temp'] != null
+                    ? (report['main']['temp'])
+                        .toStringAsFixed(1) // Convert from Kelvin to Celsius
+                    : 'N/A';
+                final feelsLike = report['main'] != null &&
+                        report['main']['feels_like'] != null
+                    ? (report['main']['feels_like'])
+                        .toStringAsFixed(1) // Convert from Kelvin to Celsius
+                    : 'N/A';
+                final weather =
+                    (report['weather'] != null && report['weather'].isNotEmpty)
+                        ? report['weather'][0]['description'] ?? 'N/A'
+                        : 'N/A';
+                final humidity =
+                    report['main'] != null && report['main']['humidity'] != null
+                        ? report['main']['humidity'].toString() + '%'
+                        : 'N/A';
+                final windSpeed =
+                    report['wind'] != null && report['wind']['speed'] != null
+                        ? (report['wind']['speed'] * 3.6).toStringAsFixed(1) +
+                            ' km/h' // Convert m/s to km/h
+                        : 'N/A';
+                final precipitation = report['rain'] != null
+                    ? (report['rain']['1h'] != null
+                        ? report['rain']['1h'].toString() + '%'
+                        : '0%')
+                    : '0%';
+
+                return Card(
+                  elevation: 4.0,
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  child: ListTile(
+                    contentPadding: EdgeInsets.all(16.0),
+                    title: Text(
+                      name,
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      'Temperature: $temperature °C\n'
+                      'Feels Like: $feelsLike °C\n'
+                      'Precipitation: $precipitation\n'
+                      'Humidity: $humidity\n'
+                      'Wind: $windSpeed',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                    trailing: Text(
+                      weather,
+                      style: TextStyle(
+                          fontSize: 16,
+                          color: Colors.blue.shade400,
+                          fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                );
+              },
+            )
+          : Center(
+              child: Text(
+                'No data available',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+              ),
+            ),
     );
   }
 }
