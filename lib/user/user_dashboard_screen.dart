@@ -563,12 +563,12 @@ class TemporaryDataScreen extends StatelessWidget {
                 final name = report['name'] ?? 'Unknown City';
                 final temperature = report['main'] != null &&
                         report['main']['temp'] != null
-                    ? (report['main']['temp'] - 273.15)
+                    ? (report['main']['temp'])
                         .toStringAsFixed(1) // Convert from Kelvin to Celsius
                     : 'N/A';
                 final feelsLike = report['main'] != null &&
                         report['main']['feels_like'] != null
-                    ? (report['main']['feels_like'] - 273.15)
+                    ? (report['main']['feels_like'])
                         .toStringAsFixed(1) // Convert from Kelvin to Celsius
                     : 'N/A';
                 final weather =
