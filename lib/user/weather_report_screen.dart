@@ -65,7 +65,6 @@ class _WeatherReportScreenState extends State<WeatherReportScreen> {
     }
   }
 
-  // Convert temperature values based on the selected unit
   double _convertTemperature(double tempInCelsius) {
     if (temperatureUnit == 'Celsius') {
       return tempInCelsius;
@@ -74,8 +73,42 @@ class _WeatherReportScreenState extends State<WeatherReportScreen> {
     }
   }
 
+  String _getWeatherIcon(String weatherCondition) {
+    switch (weatherCondition) {
+      case 'Clear':
+        return 'sunny.png';
+      case 'Rain':
+        return 'rainy.png';
+      case 'Snow':
+      case 'Clouds':
+        return 'cloudy.png';
+      case 'Wind':
+        return 'windy.png';
+      default:
+        return 'default.png';
+    }
+  }
+
+  Widget _weatherIcon(String weatherCondition) {
+    String imagePath = 'assets/images/${_getWeatherIcon(weatherCondition)}';
+    print('Attempting to load image from: $imagePath'); // Debugging line
+    return Positioned(
+      top: 8.0,
+      right: 8.0,
+      child: Image.asset(
+        imagePath,
+        width: 80.0,
+        height: 80.0,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('Error loading image: $error');
+          return Icon(Icons.error, size: 80.0, color: Colors.red);
+        },
+      ),
+    );
+  }
+
   Widget _buildWeatherDetails() {
-    // Assume we now have daily or hourly forecast data in weatherReports
     return ListView.builder(
       padding: const EdgeInsets.all(8.0),
       itemCount: widget.weatherReports.length,
@@ -84,44 +117,87 @@ class _WeatherReportScreenState extends State<WeatherReportScreen> {
         var mainWeather = report['weather'][0];
         var main = report['main'];
         var wind = report['wind'];
-        var sys = report['sys'];
+        var weatherCondition = mainWeather['main'];
 
-        return Card(
-          elevation: 4.0,
+        return Container(
           margin: const EdgeInsets.symmetric(vertical: 8.0),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12.0),
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(report['name'],
-                    style: const TextStyle(
-                      fontSize: 22.0,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.left),
-                const SizedBox(height: 16.0),
-                _weatherReportItem(FontAwesomeIcons.temperatureHigh,
-                    'Temperature: ${_convertTemperature(main['temp'])} ${_getUnit()}'),
-                _weatherReportItem(FontAwesomeIcons.thermometerHalf,
-                    'Feels Like: ${_convertTemperature(main['feels_like'])} ${_getUnit()}'),
-                _weatherReportItem(FontAwesomeIcons.cloud,
-                    'Condition: ${mainWeather['description']}'),
-                _weatherReportItem(
-                    FontAwesomeIcons.tint, 'Humidity: ${main['humidity']}%'),
-                _weatherReportItem(
-                    FontAwesomeIcons.wind, 'Wind Speed: ${wind['speed']} m/s'),
-                _weatherReportItem(FontAwesomeIcons.compressArrowsAlt,
-                    'Pressure: ${main['pressure']} hPa'),
-                _weatherReportItem(FontAwesomeIcons.eye,
-                    'Visibility: ${report['visibility']} meters'),
-                _weatherReportItem(FontAwesomeIcons.mapMarkerAlt,
-                    'Coordinates: ${report['coord']['lat']}, ${report['coord']['lon']}'),
-              ],
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Colors.blue.shade400, Colors.blue.shade800],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
             ),
+            borderRadius: BorderRadius.circular(15.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 8.0,
+                offset: Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Stack(
+            children: [
+              Card(
+                elevation: 0,
+                margin: EdgeInsets.zero,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15.0),
+                ),
+                color: Colors.transparent,
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        report['name'],
+                        style: const TextStyle(
+                          fontSize: 24.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                        textAlign: TextAlign.left,
+                      ),
+                      const SizedBox(height: 16.0),
+                      _weatherReportItem(
+                        FontAwesomeIcons.temperatureHigh,
+                        'Temperature: ${_convertTemperature(main['temp'])} ${_getUnit()}',
+                      ),
+                      _weatherReportItem(
+                        FontAwesomeIcons.thermometerHalf,
+                        'Feels Like: ${_convertTemperature(main['feels_like'])} ${_getUnit()}',
+                      ),
+                      _weatherReportItem(
+                        FontAwesomeIcons.cloud,
+                        'Condition: ${mainWeather['description']}',
+                      ),
+                      _weatherReportItem(
+                        FontAwesomeIcons.tint,
+                        'Humidity: ${main['humidity']}%',
+                      ),
+                      _weatherReportItem(
+                        FontAwesomeIcons.wind,
+                        'Wind Speed: ${wind['speed']} m/s',
+                      ),
+                      _weatherReportItem(
+                        FontAwesomeIcons.compressArrowsAlt,
+                        'Pressure: ${main['pressure']} hPa',
+                      ),
+                      _weatherReportItem(
+                        FontAwesomeIcons.eye,
+                        'Visibility: ${report['visibility']} meters',
+                      ),
+                      _weatherReportItem(
+                        FontAwesomeIcons.mapMarkerAlt,
+                        'Coordinates: ${report['coord']['lat']}, ${report['coord']['lon']}',
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              _weatherIcon(weatherCondition),
+            ],
           ),
         );
       },
@@ -134,17 +210,17 @@ class _WeatherReportScreenState extends State<WeatherReportScreen> {
 
   Widget _weatherReportItem(IconData icon, String text) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
       child: Row(
         children: [
-          FaIcon(icon, color: Colors.blueGrey[700], size: 18.0),
+          FaIcon(icon, color: Colors.white, size: 20.0),
           const SizedBox(width: 12.0),
           Expanded(
             child: Text(
               text,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 16,
-                color: Colors.blueGrey[700],
+                color: Colors.white,
               ),
               softWrap: true,
               overflow: TextOverflow.visible,
@@ -164,7 +240,7 @@ class _WeatherReportScreenState extends State<WeatherReportScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.settings),
-            onPressed: _openSettings, // Use the new method to open settings
+            onPressed: _openSettings,
           ),
         ],
       ),

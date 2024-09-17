@@ -34,12 +34,4 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
-
-  Future<bool> isAdmin() async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      return user.email == 'admin@gmail.com';
-    }
-    return false;
-  }
 }

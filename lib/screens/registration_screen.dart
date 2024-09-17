@@ -61,7 +61,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Register Webforecast',
+                      'Register Spiderweb',
                       style:
                           TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                     ),

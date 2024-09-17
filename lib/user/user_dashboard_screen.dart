@@ -29,7 +29,14 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   @override
   void initState() {
     super.initState();
-    _locationsStream = _firestore.collection('locations').snapshots();
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      _locationsStream = _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('locations')
+          .snapshots();
+    }
   }
 
   void _filterLocations(String query) {
@@ -42,6 +49,9 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   }
 
   Future<void> _addLocation() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     String input = _addLocationController.text.trim();
     if (input.isEmpty) {
       UIHelpers.showSnackBar(
@@ -54,7 +64,11 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       bool isZipCode = int.tryParse(input) != null;
       var weatherData = await _weatherService.getWeather(input);
 
-      await _firestore.collection('locations').add({
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('locations')
+          .add({
         'type': isZipCode ? 'zipCode' : 'city',
         'name': weatherData['name'],
         'zipCode': isZipCode ? input : '',
@@ -71,8 +85,16 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   }
 
   Future<void> _deleteLocation(String docId) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     try {
-      await _firestore.collection('locations').doc(docId).delete();
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('locations')
+          .doc(docId)
+          .delete();
       UIHelpers.showSnackBar(context, 'Location deleted successfully');
     } catch (e) {
       print('Error deleting location: $e');
@@ -90,6 +112,9 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
     if (result != null) {
       File file = File(result.files.single.path!);
+      User? user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
       try {
         List<Map<String, dynamic>> data =
             await _excelService.parseExcelFile(file);
@@ -185,46 +210,6 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                     onChanged: _filterLocations,
                   ),
                 ),
-                SizedBox(width: 10),
-                ElevatedButton(
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (BuildContext context) {
-                        return AlertDialog(
-                          title: Text('Add New Location'),
-                          content: TextField(
-                            controller: _addLocationController,
-                            decoration: InputDecoration(
-                              hintText: 'Enter city name or zip code',
-                            ),
-                          ),
-                          actions: [
-                            TextButton(
-                              child: Text('Cancel'),
-                              onPressed: () {
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                            TextButton(
-                              child: Text('Add'),
-                              onPressed: () {
-                                _addLocation();
-                                Navigator.of(context).pop();
-                              },
-                            ),
-                          ],
-                        );
-                      },
-                    );
-                  },
-                  child: Icon(Icons.add),
-                  style: ElevatedButton.styleFrom(
-                    shape: CircleBorder(),
-                    padding: EdgeInsets.all(12),
-                    backgroundColor: Color.fromARGB(133, 40, 58, 255),
-                  ),
-                ),
               ],
             ),
           ),
@@ -301,11 +286,67 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _uploadExcel(context),
-        icon: Icon(Icons.upload_file),
-        label: Text('Upload Excel'),
-        backgroundColor: Color.fromARGB(133, 40, 58, 255),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.all(1.0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            // Upload Excel Button
+            SizedBox(
+              height: 50,
+              width: 150,
+              child: FloatingActionButton.extended(
+                onPressed: () => _uploadExcel(context),
+                icon: Icon(Icons.upload_file),
+                label: Text('Upload Excel', style: TextStyle(fontSize: 12)),
+                backgroundColor: Color.fromARGB(133, 40, 58, 255),
+              ),
+            ),
+            SizedBox(width: 10),
+
+            // Add Location Button
+            SizedBox(
+              height: 50,
+              width: 150,
+              child: FloatingActionButton.extended(
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: Text('Add New Location'),
+                        content: TextField(
+                          controller: _addLocationController,
+                          decoration: InputDecoration(
+                            hintText: 'Enter city name or zip code',
+                          ),
+                        ),
+                        actions: [
+                          TextButton(
+                            child: Text('Cancel'),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: Text('Add'),
+                            onPressed: () {
+                              _addLocation();
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
+                icon: Icon(Icons.add),
+                label: Text('Add Location', style: TextStyle(fontSize: 12)),
+                backgroundColor: Color.fromARGB(133, 40, 58, 255),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

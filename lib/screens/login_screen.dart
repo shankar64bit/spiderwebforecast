@@ -58,7 +58,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Login Webforecast',
+                      'Login Spiderweb',
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
