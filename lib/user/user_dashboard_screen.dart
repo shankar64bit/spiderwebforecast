@@ -104,23 +104,79 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: Text('Upload Instructions'),
-          content: Text(
-            'To upload an Excel file with weather data:\n'
-            '1. Ensure the file is in .xlsx format.\n'
-            '2. The file should contain a column named "city" with city names.\n'
-            '3. Click "Upload Excel" to select and upload your file.\n'
-            '4. The app will process the file and display the weather data.',
-            style: TextStyle(fontSize: 16),
+          title: Text(
+            'Upload Instructions',
+            style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Colors.blueAccent,
+            ),
+          ),
+          content: SingleChildScrollView(
+            child: RichText(
+              text: TextSpan(
+                children: [
+                  TextSpan(
+                    text: '1. Ensure the file is in .xlsx format.\n\n',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '2. The file should contain a column named\n',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                  TextSpan(
+                    text: '* Country\n* State\n* District\n* City\n',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blueGrey,
+                    ),
+                  ),
+                  TextSpan(
+                    text: 'with the required weather location names.\n\n',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                  TextSpan(
+                    text:
+                        '3. The app will process the file and display the weather data.',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
           actions: [
             TextButton(
-              child: Text('Got It'),
+              child: Text(
+                'Got It',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.blueAccent,
+                ),
+              ),
               onPressed: () {
                 Navigator.of(context).pop(true);
               },
             ),
           ],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          contentPadding: EdgeInsets.all(24),
+          actionsPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         );
       },
     );
