@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/registration_screen.dart';
-import 'user/upload_excel_screen.dart';
-import 'user/user_dashboard_screen.dart';
+import 'screens/user/user_dashboard_screen.dart';
 
 class AppRoutes {
   static const String login = '/login';
@@ -15,6 +14,5 @@ class AppRoutes {
     login: (context) => LoginScreen(),
     register: (context) => RegistrationScreen(),
     userDashboard: (context) => UserDashboardScreen(),
-    uploadExcel: (context) => UploadExcelScreen(),
   };
 }

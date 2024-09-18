@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 
-import '../services/location_service.dart';
-import '../models/userpreferences.dart';
-import '../utils/constant.dart';
-import 'setting.dart';
+import '../../services/location_service.dart';
+import '../../models/userpreferences.dart';
+import '../../utils/constant.dart';
+import 'settingscreen.dart';
 
 class WeatherReportScreen extends StatefulWidget {
   final List<Map<String, dynamic>> weatherReports;

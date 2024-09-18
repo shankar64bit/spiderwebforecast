@@ -1,15 +1,19 @@
-# Weather App
+# Spiderweb Forecast: A Comprehensive Weather Application
 
 ## Overview
 
-This application allows users to track weather data for multiple locations. Users can upload weather data via an Excel file, view weather reports, and manage their locations. The application integrates with Firebase for user authentication and data storage and uses external weather APIs to fetch weather information.
+Spiderweb Forecast is a Flutter-based mobile application that allows users to track weather data for multiple locations. Users can manually add locations, upload weather data via an Excel file, view detailed weather reports, and manage their saved locations. The application integrates with Firebase for user authentication and data storage and uses external weather APIs to fetch real-time weather information.
 
 ## Features
 
-- Upload Excel files containing location names to fetch weather data.
-- View detailed weather reports for added locations.
-- Search and manage location entries.
-- Real-time updates with Firebase Cloud Firestore.
+- User authentication (login and registration)
+- Manual addition of locations by city name or zip code
+- Upload Excel files containing location names to fetch weather data
+- View detailed weather reports for added locations
+- Search and manage location entries
+- Real-time updates with Firebase Cloud Firestore
+- Customizable user preferences (temperature unit, update frequency)
+- Current location detection and weather display
 
 ## Getting Started
 
@@ -25,8 +29,8 @@ This application allows users to track weather data for multiple locations. User
 1. **Clone the repository**
 
    bash
-   git clone https://github.com/your-repo/weather-app.git
-   cd weather-app
+   git clone https://github.com/shankar64bit/spiderwebforecast.git
+   cd spiderwebforecast
 
 2. **Install dependencies**
 
@@ -81,32 +85,41 @@ This application allows users to track weather data for multiple locations. User
    bash
    flutter test integration_test
 
-### Codebase
+## Codebase Structure
 
 - **`lib/main.dart`**: Entry point of the application.
-- **`lib/screens/user_dashboard_screen.dart`**: Screen for managing user locations and uploading Excel files.
-- **`lib/screens/temporary_data_screen.dart`**: Screen for displaying weather data from Excel uploads.
-- **`lib/screens/weather_report_screen.dart`**: Screen for displaying weather reports for individual locations.
-- **`lib/services/excel_service.dart`**: Service for parsing Excel files.
-- **`lib/services/weather_services.dart`**: Service for fetching weather data.
-- **`lib/utils/constant.dart`**: Contains constants used across the application.
-- **`lib/utils/ui_helpers.dart`**: Contains utility functions for UI design.
-- **`lib/screens/login_screen.dart`**: Screen for user login.
+- **`lib/routes.dart`**: App route definitions.
+- **`lib/screens/`**: Contains all screen widgets.
+  - `login_screen.dart`: User login screen.
+  - `registration_screen.dart`: User registration screen.
+  - `user_dashboard_screen.dart`: Main dashboard for managing locations.
+  - `weather_report_screen.dart`: Detailed weather report display.
+  - `temporary_screen.dart`: Displays weather data from Excel uploads.
+  - `settingscreen.dart`: User preferences and settings.
+- **`lib/services/`**: Contains service classes.
+  - `auth_service.dart`: Handles user authentication.
+  - `weather_services.dart`: Fetches weather data from API.
+  - `excel_service.dart`: Parses Excel files.
+  - `location_service.dart`: Manages user locations.
+  - `cache_service.dart`: Handles local data caching.
+- **`lib/models/`**: Data models.
+  - `userpreferences.dart`: User preference model.
+- **`lib/utils/`**: Utility functions and constants.
+  - `constant.dart`: App-wide constants.
+  - `ui_helpers.dart`: UI utility functions.
+  - `validators.dart`: Form input validators.
 
-### Configuration Files
+## Configuration Files
 
 - **`pubspec.yaml`**: Manages project dependencies.
 - **`android/app/build.gradle`**: Android-specific build configuration.
 - **`ios/Runner/Info.plist`**: iOS-specific configuration.
+- **`firebase_options.dart`**: Firebase configuration options.
 
-### Contribution
+## Contribution
 
 Contributions are welcome! Please fork the repository and submit a pull request with your changes.
 
-### License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-### Contact
+## Contact
 
 For any questions or issues, please contact [shankar2space@gmail.com].
