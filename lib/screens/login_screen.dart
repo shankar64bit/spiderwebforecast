@@ -25,14 +25,16 @@ class _LoginScreenState extends State<LoginScreen> {
       try {
         final authService = Provider.of<AuthService>(context, listen: false);
         await authService.signIn(_email, _password);
-        // If successful, the AuthWrapper in main.dart will handle navigation
       } catch (e) {
-        UIHelpers.showSnackBar(context, 'Login failed: ${e.toString()}',
+        String errorMessage = e.toString(); // Customize based on error type
+        UIHelpers.showSnackBar(context, 'Login failed: $errorMessage',
             isError: true);
       } finally {
-        setState(() {
-          _isLoading = false;
-        });
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
     }
   }
@@ -47,9 +49,9 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Form(
             key: _formKey,
             child: Card(
-              elevation: 8, // Shadow effect
+              elevation: 8,
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16), // Rounded corners
+                borderRadius: BorderRadius.circular(16),
               ),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
@@ -98,17 +100,17 @@ class _LoginScreenState extends State<LoginScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
                                   const Color.fromARGB(255, 115, 123, 210),
-
                               padding: EdgeInsets.symmetric(
-                                  vertical: 16,
-                                  horizontal: 32), // Adjust padding values
+                                  vertical: 16, horizontal: 32),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
                             child: Text('Sign in',
                                 style: TextStyle(color: Colors.white)),
-                            onPressed: _signIn,
+                            onPressed: _isLoading
+                                ? null
+                                : _signIn, // Disable when loading
                           ),
                     SizedBox(height: 12),
                     TextButton(

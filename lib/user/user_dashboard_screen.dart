@@ -352,9 +352,21 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: Icon(Icons.logout, color: Colors.white),
-            onPressed: () => _logout(context),
+          Padding(
+            padding: EdgeInsets.fromLTRB(0, 15, 10, 15),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.white, width: 1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: TextButton(
+                onPressed: () => _logout(context),
+                child: Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -484,6 +496,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               height: 50,
               width: 150,
               child: FloatingActionButton.extended(
+                heroTag: 'uniqueHeroTag1', // Ensure this is unique
                 onPressed: () {
                   _showUploadInstructions(
                       context); // Show instructions before upload
@@ -498,6 +511,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               height: 50,
               width: 150,
               child: FloatingActionButton.extended(
+                heroTag: 'uniqueHeroTag2', // Ensure this is unique
                 onPressed: () {
                   showDialog(
                     context: context,
