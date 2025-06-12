@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart'; // Added for permissions
+import 'package:permission_handler/permission_handler.dart';
 import '../../../../screens/login_screen.dart';
 import '../../utils/constant.dart';
 import 'services/excel_service.dart';
@@ -23,6 +23,8 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final TextEditingController _searchController = TextEditingController();
   final TextEditingController _addLocationController = TextEditingController();
+  final TextEditingController _editLocationController = TextEditingController();
+  final TextEditingController _editZipCodeController = TextEditingController();
 
   List<Map<String, dynamic>> locations = [];
   List<Map<String, dynamic>> filteredLocations = [];
@@ -30,6 +32,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
 
   String _currentLocation = 'Unknown';
   String _currentTemperature = 'N/A';
+  Map<String, String> locationTemperatures = {};
 
   @override
   void initState() {
@@ -50,10 +53,8 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
   }
 
   Future<void> _getCurrentLocationAndWeather() async {
-    // Request location permissions
     PermissionStatus permission = await Permission.location.request();
     if (permission.isGranted) {
-      // Get current location
       try {
         Position position = await Geolocator.getCurrentPosition(
           desiredAccuracy: LocationAccuracy.high,
@@ -62,7 +63,6 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
         double latitude = position.latitude;
         double longitude = position.longitude;
 
-        // Fetch weather data
         var weatherData =
             await _weatherService.getWeatherByCoordinates(latitude, longitude);
         setState(() {
@@ -120,6 +120,103 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           'Error adding location. Please check the name or zip code and try again.',
           true);
     }
+  }
+
+  Future<void> _editLocation(
+      String docId, String currentName, String currentZipCode) async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    String newName = _editLocationController.text.trim();
+    String newZipCode = _editZipCodeController.text.trim();
+
+    if (newName.isEmpty) {
+      _showSnackBar('Location name cannot be empty', true);
+      return;
+    }
+
+    try {
+      var weatherData = await _weatherService.getWeather(newName);
+      String verifiedName = weatherData['name'] ?? newName;
+
+      await _firestore
+          .collection('users')
+          .doc(user.uid)
+          .collection('locations')
+          .doc(docId)
+          .update({
+        'name': verifiedName,
+        'zipCode': newZipCode,
+        'type': newZipCode.isEmpty ? 'city' : 'zipCode',
+      });
+
+      _editLocationController.clear();
+      _editZipCodeController.clear();
+
+      locationTemperatures.remove(currentName);
+      await _fetchWeatherForLocation(verifiedName);
+
+      _showSnackBar('Location updated successfully');
+    } catch (e) {
+      print('Error updating location: $e');
+      _showSnackBar(
+          'Error updating location. Please check the name or zip code and try again.',
+          true);
+    }
+  }
+
+  Future<void> _showEditDialog(Map<String, dynamic> location) async {
+    _editLocationController.text = location['name'];
+    _editZipCodeController.text = location['zipCode'] ?? '';
+
+    await showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Edit Location'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _editLocationController,
+                decoration: InputDecoration(
+                  labelText: 'Location Name',
+                  hintText: 'Enter new location name',
+                ),
+              ),
+              SizedBox(height: 10),
+              TextField(
+                controller: _editZipCodeController,
+                decoration: InputDecoration(
+                  labelText: 'Zip Code (optional)',
+                  hintText: 'Enter zip code',
+                ),
+                keyboardType: TextInputType.number,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Save'),
+              onPressed: () async {
+                Navigator.of(context).pop();
+                await _editLocation(
+                  location['id'],
+                  location['name'],
+                  location['zipCode'] ?? '',
+                );
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _deleteLocation(String docId) async {
@@ -217,13 +314,12 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
             borderRadius: BorderRadius.circular(16),
           ),
           contentPadding: EdgeInsets.all(24),
-          actionsPadding: EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         );
       },
     );
 
     if (shouldProceed == true) {
-      _uploadExcel(context); // Proceed with file upload
+      _uploadExcel(context);
     }
   }
 
@@ -283,6 +379,38 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
     }
   }
 
+  Future<void> _fetchWeatherForLocations() async {
+    User? user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    for (var location in locations) {
+      String locationName = location['name'];
+      if (!locationTemperatures.containsKey(locationName)) {
+        try {
+          var weatherData = await _weatherService.getWeather(locationName);
+          setState(() {
+            locationTemperatures[locationName] =
+                (weatherData['main']['temp']).toStringAsFixed(1);
+          });
+        } catch (e) {
+          print('Error fetching weather for $locationName: $e');
+        }
+      }
+    }
+  }
+
+  Future<void> _fetchWeatherForLocation(String locationName) async {
+    try {
+      var weatherData = await _weatherService.getWeather(locationName);
+      setState(() {
+        locationTemperatures[locationName] =
+            (weatherData['main']['temp']).toStringAsFixed(1);
+      });
+    } catch (e) {
+      print('Error fetching weather for $locationName: $e');
+    }
+  }
+
   Future<void> _logout(BuildContext context) async {
     try {
       await FirebaseAuth.instance.signOut();
@@ -305,28 +433,6 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
           backgroundColor: isError ? Colors.red : Colors.green,
         ),
       );
-    }
-  }
-
-  Map<String, String> locationTemperatures = {}; // Store temperatures
-
-  Future<void> _fetchWeatherForLocations() async {
-    User? user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    for (var location in locations) {
-      String locationName = location['name'];
-      if (!locationTemperatures.containsKey(locationName)) {
-        try {
-          var weatherData = await _weatherService.getWeather(locationName);
-          setState(() {
-            locationTemperatures[locationName] = (weatherData['main']['temp'])
-                .toStringAsFixed(1); // Convert Kelvin to Celsius
-          });
-        } catch (e) {
-          print('Error fetching weather for $locationName: $e');
-        }
-      }
     }
   }
 
@@ -373,20 +479,19 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
       ),
       body: Column(
         children: [
-          // Search bar
           Padding(
-            padding: const EdgeInsets.symmetric(
-                horizontal: 16.0, vertical: 10.0), // Slimmer padding
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
             child: Container(
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(12), // Rounded corners
+                borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.grey.withOpacity(0.5),
                     spreadRadius: 1,
                     blurRadius: 6,
-                    offset: Offset(0, 2), // Shadow position
+                    offset: Offset(0, 2),
                   ),
                 ],
               ),
@@ -394,20 +499,16 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                 controller: _searchController,
                 decoration: InputDecoration(
                   hintText: 'Search locations',
-                  hintStyle:
-                      TextStyle(color: Colors.grey[600]), // Subtle hint color
-                  prefixIcon: Icon(Icons.search,
-                      color: Colors.blueGrey), // Subtle icon color
-                  border: InputBorder.none, // Remove default border
-                  contentPadding: EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 10.0), // Internal padding
+                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  prefixIcon: Icon(Icons.search, color: Colors.blueGrey),
+                  border: InputBorder.none,
+                  contentPadding:
+                      EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
                 ),
                 onChanged: _filterLocations,
               ),
             ),
           ),
-
-          // Locations list
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
               stream: _locationsStream,
@@ -429,7 +530,6 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                   };
                 }).toList();
 
-                // Fetch weather for locations
                 _fetchWeatherForLocations();
 
                 filteredLocations = _searchController.text.isEmpty
@@ -474,9 +574,18 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
                             Text(location['zipCode'] ?? ''),
                           ],
                         ),
-                        trailing: IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteLocation(location['id']),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit, color: Colors.blue),
+                              onPressed: () => _showEditDialog(location),
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete, color: Colors.red),
+                              onPressed: () => _deleteLocation(location['id']),
+                            ),
+                          ],
                         ),
                         onTap: () => _getWeatherForLocation(location['name']),
                       ),
@@ -497,10 +606,9 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               height: 50,
               width: 150,
               child: FloatingActionButton.extended(
-                heroTag: 'uniqueHeroTag1', // Ensure this is unique
+                heroTag: 'uniqueHeroTag1',
                 onPressed: () {
-                  _showUploadInstructions(
-                      context); // Show instructions before upload
+                  _showUploadInstructions(context);
                 },
                 icon: Icon(Icons.upload_file),
                 label: Text('Upload Excel', style: TextStyle(fontSize: 12)),
@@ -512,7 +620,7 @@ class _UserDashboardScreenState extends State<UserDashboardScreen> {
               height: 50,
               width: 150,
               child: FloatingActionButton.extended(
-                heroTag: 'uniqueHeroTag2', // Ensure this is unique
+                heroTag: 'uniqueHeroTag2',
                 onPressed: () {
                   showDialog(
                     context: context,
